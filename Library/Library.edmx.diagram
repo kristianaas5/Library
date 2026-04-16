@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="a076c083e83048c6b447e41781d0ecd9" Name="Diagram1" ZoomLevel="74">
+        <EntityTypeShape EntityType="LibraryModel.Authors" Width="1.5" PointX="6" PointY="0.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="LibraryModel.Books" Width="1.5" PointX="8" PointY="0.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="LibraryModel.Borrowings" Width="1.5" PointX="8" PointY="3.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="LibraryModel.Categories" Width="1.5" PointX="6" PointY="2.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="LibraryModel.Events" Width="1.5" PointX="6" PointY="6.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="LibraryModel.Librarians" Width="1.5" PointX="6" PointY="4.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="LibraryModel.Readers" Width="1.5" PointX="8" PointY="6.875" IsExpanded="true" />
+        <AssociationConnector Association="LibraryModel.fk_books_authors" ManuallyRouted="false" />
+        <AssociationConnector Association="LibraryModel.fk_books_categories" ManuallyRouted="false" />
+        <AssociationConnector Association="LibraryModel.fk_borrowing_book" ManuallyRouted="false" />
+        <AssociationConnector Association="LibraryModel.fk_borrowing_librarian" ManuallyRouted="false" />
+        <AssociationConnector Association="LibraryModel.fk_borrowing_reader" ManuallyRouted="false" />
+        <AssociationConnector Association="LibraryModel.fk_events_librarians" ManuallyRouted="false" />
+        <AssociationConnector Association="LibraryModel.Events_readers" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
