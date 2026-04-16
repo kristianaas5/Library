@@ -182,35 +182,35 @@
             // 
             this.textBox2.Location = new System.Drawing.Point(130, 180);
             this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(100, 22);
+            this.textBox2.Size = new System.Drawing.Size(154, 22);
             this.textBox2.TabIndex = 12;
             // 
             // textBox3
             // 
             this.textBox3.Location = new System.Drawing.Point(130, 230);
             this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(100, 22);
+            this.textBox3.Size = new System.Drawing.Size(154, 22);
             this.textBox3.TabIndex = 13;
             // 
             // textBox4
             // 
             this.textBox4.Location = new System.Drawing.Point(130, 280);
             this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(100, 22);
+            this.textBox4.Size = new System.Drawing.Size(154, 22);
             this.textBox4.TabIndex = 14;
             // 
             // textBox5
             // 
             this.textBox5.Location = new System.Drawing.Point(130, 330);
             this.textBox5.Name = "textBox5";
-            this.textBox5.Size = new System.Drawing.Size(100, 22);
+            this.textBox5.Size = new System.Drawing.Size(154, 22);
             this.textBox5.TabIndex = 15;
             // 
             // textBox1
             // 
             this.textBox1.Location = new System.Drawing.Point(130, 130);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(100, 22);
+            this.textBox1.Size = new System.Drawing.Size(154, 22);
             this.textBox1.TabIndex = 16;
             // 
             // dataGridView1
@@ -218,17 +218,17 @@
             this.dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(270, 93);
+            this.dataGridView1.Location = new System.Drawing.Point(303, 93);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
             this.dataGridView1.RowTemplate.Height = 24;
-            this.dataGridView1.Size = new System.Drawing.Size(802, 299);
+            this.dataGridView1.Size = new System.Drawing.Size(944, 299);
             this.dataGridView1.TabIndex = 17;
             // 
             // btnInsert
             // 
             this.btnInsert.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(64)))), ((int)(((byte)(0)))));
-            this.btnInsert.Location = new System.Drawing.Point(25, 430);
+            this.btnInsert.Location = new System.Drawing.Point(18, 375);
             this.btnInsert.Name = "btnInsert";
             this.btnInsert.Size = new System.Drawing.Size(75, 23);
             this.btnInsert.TabIndex = 18;
@@ -239,7 +239,7 @@
             // btnSort
             // 
             this.btnSort.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(64)))), ((int)(((byte)(0)))));
-            this.btnSort.Location = new System.Drawing.Point(120, 430);
+            this.btnSort.Location = new System.Drawing.Point(210, 456);
             this.btnSort.Name = "btnSort";
             this.btnSort.Size = new System.Drawing.Size(75, 23);
             this.btnSort.TabIndex = 21;
@@ -250,7 +250,7 @@
             // btnExit
             // 
             this.btnExit.BackColor = System.Drawing.Color.Red;
-            this.btnExit.Location = new System.Drawing.Point(1024, 452);
+            this.btnExit.Location = new System.Drawing.Point(1188, 456);
             this.btnExit.Name = "btnExit";
             this.btnExit.Size = new System.Drawing.Size(81, 29);
             this.btnExit.TabIndex = 22;
@@ -261,7 +261,7 @@
             // btnFilter
             // 
             this.btnFilter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(64)))), ((int)(((byte)(0)))));
-            this.btnFilter.Location = new System.Drawing.Point(520, 430);
+            this.btnFilter.Location = new System.Drawing.Point(439, 456);
             this.btnFilter.Name = "btnFilter";
             this.btnFilter.Size = new System.Drawing.Size(75, 23);
             this.btnFilter.TabIndex = 23;
@@ -272,14 +272,14 @@
             // cbFilter
             // 
             this.cbFilter.FormattingEnabled = true;
-            this.cbFilter.Location = new System.Drawing.Point(370, 410);
+            this.cbFilter.Location = new System.Drawing.Point(300, 430);
             this.cbFilter.Name = "cbFilter";
             this.cbFilter.Size = new System.Drawing.Size(121, 24);
             this.cbFilter.TabIndex = 24;
             // 
             // txtFilter
             // 
-            this.txtFilter.Location = new System.Drawing.Point(370, 450);
+            this.txtFilter.Location = new System.Drawing.Point(300, 456);
             this.txtFilter.Name = "txtFilter";
             this.txtFilter.Size = new System.Drawing.Size(100, 22);
             this.txtFilter.TabIndex = 25;
@@ -287,7 +287,7 @@
             // btnUpdate
             // 
             this.btnUpdate.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(64)))), ((int)(((byte)(0)))));
-            this.btnUpdate.Location = new System.Drawing.Point(215, 430);
+            this.btnUpdate.Location = new System.Drawing.Point(210, 375);
             this.btnUpdate.Name = "btnUpdate";
             this.btnUpdate.Size = new System.Drawing.Size(75, 23);
             this.btnUpdate.TabIndex = 26;
@@ -299,11 +299,11 @@
             // 
             this.cbDescending.AutoSize = true;
             this.cbDescending.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            this.cbDescending.Location = new System.Drawing.Point(120, 404);
+            this.cbDescending.Location = new System.Drawing.Point(137, 429);
             this.cbDescending.Name = "cbDescending";
-            this.cbDescending.Size = new System.Drawing.Size(107, 20);
+            this.cbDescending.Size = new System.Drawing.Size(147, 20);
             this.cbDescending.TabIndex = 28;
-            this.cbDescending.Text = "descending?";
+            this.cbDescending.Text = "sort bydescending?";
             this.cbDescending.UseVisualStyleBackColor = false;
             // 
             // Library
@@ -311,7 +311,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
-            this.ClientSize = new System.Drawing.Size(1165, 493);
+            this.ClientSize = new System.Drawing.Size(1281, 493);
             this.Controls.Add(this.cbDescending);
             this.Controls.Add(this.btnUpdate);
             this.Controls.Add(this.txtFilter);

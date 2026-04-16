@@ -21,13 +21,15 @@ namespace Library
 
             // Prevent ugly default exception dialog and make debugging easier
             dataGridView1.DataError += DataGridView1_DataError;
+
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridView1.MultiSelect = false;
+            dataGridView1.AllowUserToAddRows = false; // предотвратява празния "new row"
+            dataGridView1.AutoGenerateColumns = true;  // ако искаш да се генерират колони автоматично
+
+            // Wire up the cell click handler so selecting a row fills the textboxes
+            dataGridView1.CellClick += dataGridView1_CellClick;
         }
-        //protected override void OnShown(EventArgs e)
-        //{
-        //    base.OnShown(e);
-        //    this.ActiveControl = null;          // remove focus from any control
-        //    dataGridView1.ClearSelection();     // clear grid selection if needed
-        //}
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -45,7 +47,7 @@ namespace Library
 
                 if (rbBooks.Checked)
                 {
-                    // Show all scalar fields and related names (authors/categories) — eager load with Include.
+                    // Show scalar fields and both related ids and related names (authors/categories)
                     dataGridView1.DataSource = context.Books
                         .Include(b => b.Authors)
                         .Include(b => b.Categories)
@@ -54,7 +56,9 @@ namespace Library
                             Id = b.id,
                             Heading = b.heading,
                             Year = b.year,
+                            AuthorId = b.author_id,
                             Author = b.Authors != null ? b.Authors.name : null,
+                            CategoryId = b.category_id,
                             Category = b.Categories != null ? b.Categories.name : null,
                             BorrowingsCount = b.Borrowings.Count()
                         })
@@ -87,6 +91,7 @@ namespace Library
                             Reader = b.Readers != null ? b.Readers.name : null,
                             BookId = b.book_id,
                             Book = b.Books != null ? b.Books.heading : null,
+                            LibrarianId = b.librarian_id,
                             Librarian = b.Librarians != null ? b.Librarians.name : null,
                             DateGot = b.date_got,
                             DateReturn = b.date_return,
@@ -99,6 +104,8 @@ namespace Library
                         dataGridView1.Columns["ReaderId"].Visible = false;
                     if (dataGridView1.Columns.Contains("BookId"))
                         dataGridView1.Columns["BookId"].Visible = false;
+                    if (dataGridView1.Columns.Contains("LibrarianId"))
+                        dataGridView1.Columns["LibrarianId"].Visible = false;
                 }
                 else if (rbEvents.Checked)
                 {
@@ -110,6 +117,7 @@ namespace Library
                             Name = ev.name,
                             Date = ev.date,
                             Description = ev.description,
+                            LibrarianId = ev.librarian_id,
                             Librarian = ev.Librarians != null ? ev.Librarians.name : null
                         })
                         .ToList();
@@ -283,7 +291,7 @@ Status";
                     // insert expects ids; user can type ids or you can extend UI to resolve names -> ids
                     context.Borrowings.Add(new Borrowings
                     {
-                        librarian_id = int.Parse(textBox3.Text), // currently textBox3 label is Librarian
+                        librarian_id = int.Parse(textBox3.Text), // currently textBox3 label is Librarian (id expected)
                         reader_id = int.Parse(textBox1.Text),
                         book_id = int.Parse(textBox2.Text),
                         date_got = DateTime.Parse(textBox4.Text),
@@ -311,49 +319,85 @@ Status";
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (dataGridView1.SelectedRows.Count == 0) return;
+            if (e.RowIndex < 0) return;
+            var row = dataGridView1.Rows[e.RowIndex];
 
-            // first column in the projection is Id
-            editId = Convert.ToInt32(dataGridView1.SelectedRows[0].Cells["Id"].Value);
+            // опитваме да прочетем DataBoundItem (анонимният тип от Select)
+            var dataItem = row.DataBoundItem;
 
+            // helper: чете стойност първо от DataBoundItem чрез рефлексия, иначе от клетка (по DataPropertyName/HeaderText/Name/индекс)
+            Func<string, int, string> getValue = (propName, fallbackIndex) =>
+            {
+                if (dataItem != null)
+                {
+                    var pi = dataItem.GetType().GetProperty(propName);
+                    if (pi != null)
+                        return pi.GetValue(dataItem)?.ToString() ?? string.Empty;
+                }
+
+                // търсим клетка по DataPropertyName или HeaderText или Column.Name
+                var cell = row.Cells
+                    .Cast<DataGridViewCell>()
+                    .FirstOrDefault(c =>
+                        string.Equals(c.OwningColumn.DataPropertyName, propName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(c.OwningColumn.HeaderText, propName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(c.OwningColumn.Name, propName, StringComparison.OrdinalIgnoreCase));
+
+                if (cell != null)
+                    return cell.Value?.ToString() ?? string.Empty;
+
+                // fallback по индекс
+                if (fallbackIndex >= 0 && fallbackIndex < row.Cells.Count)
+                    return row.Cells[fallbackIndex].Value?.ToString() ?? string.Empty;
+
+                return string.Empty;
+            };
+
+            // прочитаме Id (от DataBoundItem или клетка)
+            var idText = getValue("Id", 0);
+            if (!int.TryParse(idText, out editId))
+                editId = -1;
+
+            // попълваме textbox-овете според режима
             if (rbBooks.Checked)
             {
-                textBox1.Text = dataGridView1.SelectedRows[0].Cells["Heading"].Value?.ToString();
-                textBox2.Text = dataGridView1.SelectedRows[0].Cells["Year"].Value?.ToString();
-                textBox3.Text = dataGridView1.SelectedRows[0].Cells["Author"].Value?.ToString();
-                textBox4.Text = dataGridView1.SelectedRows[0].Cells["Category"].Value?.ToString();
+                // projection: Id(0), Heading(1), Year(2), AuthorId(3), Author(4), CategoryId(5), Category(6), BorrowingsCount(7)
+                textBox1.Text = getValue("Heading", 1);
+                textBox2.Text = getValue("Year", 2);
+                // now show author id and category id in the textboxes (not names)
+                textBox3.Text = getValue("AuthorId", 3);
+                textBox4.Text = getValue("CategoryId", 5);
             }
             else if (rbReaders.Checked)
             {
-                textBox1.Text = dataGridView1.SelectedRows[0].Cells["Name"].Value?.ToString();
-                textBox2.Text = dataGridView1.SelectedRows[0].Cells["Email"].Value?.ToString();
-                textBox3.Text = dataGridView1.SelectedRows[0].Cells["PhoneNumber"].Value?.ToString();
-                textBox4.Text = dataGridView1.SelectedRows[0].Cells["DateRegistration"].Value?.ToString();
+                textBox1.Text = getValue("Name", 1);
+                textBox2.Text = getValue("Email", 2);
+                textBox3.Text = getValue("PhoneNumber", 3);
+                textBox4.Text = getValue("DateRegistration", 4);
             }
             else if (rbBorrowings.Checked)
             {
-                // populate ids into textboxes to keep existing insert/update behavior intact
-                if (dataGridView1.Columns.Contains("ReaderId"))
-                    textBox1.Text = dataGridView1.SelectedRows[0].Cells["ReaderId"].Value?.ToString();
-                if (dataGridView1.Columns.Contains("BookId"))
-                    textBox2.Text = dataGridView1.SelectedRows[0].Cells["BookId"].Value?.ToString();
-
-                // show librarian name in textbox3 if present (non-id)
-                textBox3.Text = dataGridView1.SelectedRows[0].Cells["Librarian"].Value?.ToString();
-
-                textBox4.Text = dataGridView1.SelectedRows[0].Cells["DateGot"].Value?.ToString();
-                textBox5.Text = dataGridView1.SelectedRows[0].Cells["DateReturn"].Value?.ToString();
+                // projection: Id(0), ReaderId(1), Reader(2), BookId(3), Book(4), LibrarianId(5), Librarian(6), DateGot(7), DateReturn(8), Status(9)
+                textBox1.Text = getValue("ReaderId", 1);
+                textBox2.Text = getValue("BookId", 3);
+                // show librarian id (not name) in textBox3 (matching Insert/Update expectations)
+                textBox3.Text = getValue("LibrarianId", 5);
+                textBox4.Text = getValue("DateGot", 7);
+                textBox5.Text = getValue("DateReturn", 8);
             }
             else if (rbEvents.Checked)
             {
-                textBox1.Text = dataGridView1.SelectedRows[0].Cells["Name"].Value?.ToString();
-                textBox2.Text = dataGridView1.SelectedRows[0].Cells["Date"].Value?.ToString();
-                textBox3.Text = dataGridView1.SelectedRows[0].Cells["Description"].Value?.ToString();
-
-                // if Librarian column exists, show it in textBox4 (or adjust UI as needed)
-                if (dataGridView1.Columns.Contains("Librarian") && textBox4 != null)
-                    textBox4.Text = dataGridView1.SelectedRows[0].Cells["Librarian"].Value?.ToString();
+                // projection: Id(0), Name(1), Date(2), Description(3), LibrarianId(4), Librarian(5)
+                textBox1.Text = getValue("Name", 1);
+                textBox2.Text = getValue("Date", 2);
+                textBox3.Text = getValue("Description", 3);
+                // show librarian id in textBox4
+                textBox4.Text = getValue("LibrarianId", 4);
             }
+
+            // визуална селекция
+            dataGridView1.ClearSelection();
+            row.Selected = true;
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
@@ -395,7 +439,7 @@ Status";
                     dataGridView1.DataSource = q
                         .Include(b => b.Authors)
                         .Include(b => b.Categories)
-                        .Select(b => new { Id = b.id, Heading = b.heading, Year = b.year, Author = b.Authors != null ? b.Authors.name : null, Category = b.Categories != null ? b.Categories.name : null, BorrowingsCount = b.Borrowings.Count() })
+                        .Select(b => new { Id = b.id, Heading = b.heading, Year = b.year, AuthorId = b.author_id, Author = b.Authors != null ? b.Authors.name : null, CategoryId = b.category_id, Category = b.Categories != null ? b.Categories.name : null, BorrowingsCount = b.Borrowings.Count() })
                         .ToList();
                 }
                 else if (rbReaders.Checked)
@@ -450,6 +494,7 @@ Status";
                             Reader = b.Readers != null ? b.Readers.name : null,
                             BookId = b.book_id,
                             Book = b.Books != null ? b.Books.heading : null,
+                            LibrarianId = b.librarian_id,
                             Librarian = b.Librarians != null ? b.Librarians.name : null,
                             DateGot = b.date_got,
                             DateReturn = b.date_return,
@@ -461,6 +506,8 @@ Status";
                         dataGridView1.Columns["ReaderId"].Visible = false;
                     if (dataGridView1.Columns.Contains("BookId"))
                         dataGridView1.Columns["BookId"].Visible = false;
+                    if (dataGridView1.Columns.Contains("LibrarianId"))
+                        dataGridView1.Columns["LibrarianId"].Visible = false;
                 }
                 else if (rbEvents.Checked)
                 {
@@ -480,7 +527,7 @@ Status";
                         q = q.Where(x => x.Librarians != null && x.Librarians.name.Contains(value));
 
                     dataGridView1.DataSource = q
-                        .Select(ev => new { Id = ev.id, Name = ev.name, Date = ev.date, Description = ev.description, Librarian = ev.Librarians != null ? ev.Librarians.name : null })
+                        .Select(ev => new { Id = ev.id, Name = ev.name, Date = ev.date, Description = ev.description, LibrarianId = ev.librarian_id, Librarian = ev.Librarians != null ? ev.Librarians.name : null })
                         .ToList();
                 }
             }
@@ -507,48 +554,131 @@ Status";
 
         private void btnUpdate_Click_1(object sender, EventArgs e)
         {
+            if (editId <= 0)
+            {
+                MessageBox.Show("Няма избран запис за ъпдейт. Изберете ред от таблицата.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             using (var context = new LibraryEntities())
             {
-
-                if (rbBooks.Checked)
+                try
                 {
-                    var b = context.Books.Find(editId);
-                    b.heading = textBox1.Text;
-                    b.year = int.Parse(textBox2.Text);
-                    b.author_id = int.Parse(textBox3.Text);
-                    b.category_id = int.Parse(textBox4.Text);
-                }
+                    if (rbBooks.Checked)
+                    {
+                        var b = context.Books.Find(editId);
+                        if (b == null)
+                        {
+                            MessageBox.Show("Книгата не е намерена в базата (вероятно е изтрита).", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
 
-                else if (rbReaders.Checked)
+                        if (!int.TryParse(textBox2.Text, out var year))
+                        {
+                            MessageBox.Show("Невалиден Year.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        if (!int.TryParse(textBox3.Text, out var authorId))
+                        {
+                            MessageBox.Show("Невалиден Author id.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        if (!int.TryParse(textBox4.Text, out var categoryId))
+                        {
+                            MessageBox.Show("Невалиден Category id.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        b.heading = textBox1.Text;
+                        b.year = year;
+                        b.author_id = authorId;
+                        b.category_id = categoryId;
+                    }
+                    else if (rbReaders.Checked)
+                    {
+                        var r = context.Readers.Find(editId);
+                        if (r == null)
+                        {
+                            MessageBox.Show("Читателят не е намерен в базата.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        if (!DateTime.TryParse(textBox4.Text, out var regDate))
+                        {
+                            MessageBox.Show("Невалидна дата на регистрация.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        r.name = textBox1.Text;
+                        r.email = textBox2.Text;
+                        r.phone_number = textBox3.Text;
+                        r.date_registration = regDate;
+                    }
+                    else if (rbBorrowings.Checked)
+                    {
+                        var br = context.Borrowings.Find(editId);
+                        if (br == null)
+                        {
+                            MessageBox.Show("Заемането не е намерено в базата.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        if (!int.TryParse(textBox1.Text, out var readerId))
+                        {
+                            MessageBox.Show("Невалиден Reader id.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        if (!int.TryParse(textBox2.Text, out var bookId))
+                        {
+                            MessageBox.Show("Невалиден Book id.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        if (!int.TryParse(textBox3.Text, out var librarianId))
+                        {
+                            MessageBox.Show("Невалиден Librarian id.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        if (!DateTime.TryParse(textBox4.Text, out var dateGot))
+                        {
+                            MessageBox.Show("Невалидна дата (DateGot).", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        br.reader_id = readerId;
+                        br.book_id = bookId;
+                        br.librarian_id = librarianId;
+                        br.date_got = dateGot;
+                        br.date_return = DateTime.TryParse(textBox5.Text, out var dr) ? (DateTime?)dr : null;
+                    }
+                    else if (rbEvents.Checked)
+                    {
+                        var ev = context.Events.Find(editId);
+                        if (ev == null)
+                        {
+                            MessageBox.Show("Събитието не е намерено в базата.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        if (!DateTime.TryParse(textBox2.Text, out var evDate))
+                        {
+                            MessageBox.Show("Невалидна дата за събитието.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        ev.name = textBox1.Text;
+                        ev.date = evDate;
+                        ev.description = textBox3.Text;
+                        if (int.TryParse(textBox4.Text, out var libId))
+                            ev.librarian_id = libId;
+                    }
+
+                    context.SaveChanges();
+                }
+                catch (Exception ex)
                 {
-                    var r = context.Readers.Find(editId);
-                    r.name = textBox1.Text;
-                    r.email = textBox2.Text;
-                    r.phone_number = textBox3.Text;
-                    r.date_registration = DateTime.Parse(textBox4.Text);
+                    MessageBox.Show("Update failed: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
-
-                else if (rbBorrowings.Checked)
-                {
-                    var br = context.Borrowings.Find(editId);
-                    br.reader_id = int.Parse(textBox1.Text);
-                    br.book_id = int.Parse(textBox2.Text);
-                    br.librarian_id = int.Parse(textBox3.Text);
-                    br.date_got = DateTime.Parse(textBox4.Text);
-                    br.date_return = DateTime.TryParse(textBox5.Text, out var dr) ? (DateTime?)dr : null;
-                    // status handling if you have a separate status field
-                }
-
-                else if (rbEvents.Checked)
-                {
-                    var ev = context.Events.Find(editId);
-                    ev.name = textBox1.Text;
-                    ev.date = DateTime.Parse(textBox2.Text);
-                    ev.description = textBox3.Text;
-                    // event.librarian_id update if desired
-                }
-
-                context.SaveChanges();
             }
 
             LoadData();
@@ -621,7 +751,7 @@ Status";
                         dataGridView1.DataSource = q
                             .Include(b => b.Authors)
                             .Include(b => b.Categories)
-                            .Select(b => new { Id = b.id, Heading = b.heading, Year = b.year, Author = b.Authors != null ? b.Authors.name : null, Category = b.Categories != null ? b.Categories.name : null, BorrowingsCount = b.Borrowings.Count() })
+                            .Select(b => new { Id = b.id, Heading = b.heading, Year = b.year, AuthorId = b.author_id, Author = b.Authors != null ? b.Authors.name : null, CategoryId = b.category_id, Category = b.Categories != null ? b.Categories.name : null, BorrowingsCount = b.Borrowings.Count() })
                             .ToList();
                     }
                     else if (rbReaders.Checked)
@@ -720,6 +850,7 @@ Status";
                                 Reader = b.Readers != null ? b.Readers.name : null,
                                 BookId = b.book_id,
                                 Book = b.Books != null ? b.Books.heading : null,
+                                LibrarianId = b.librarian_id,
                                 Librarian = b.Librarians != null ? b.Librarians.name : null,
                                 DateGot = b.date_got,
                                 DateReturn = b.date_return,
@@ -731,6 +862,8 @@ Status";
                             dataGridView1.Columns["ReaderId"].Visible = false;
                         if (dataGridView1.Columns.Contains("BookId"))
                             dataGridView1.Columns["BookId"].Visible = false;
+                        if (dataGridView1.Columns.Contains("LibrarianId"))
+                            dataGridView1.Columns["LibrarianId"].Visible = false;
                     }
                     else if (rbEvents.Checked)
                     {
@@ -772,7 +905,7 @@ Status";
                         }
 
                         dataGridView1.DataSource = q
-                            .Select(ev => new { Id = ev.id, Name = ev.name, Date = ev.date, Description = ev.description, Librarian = ev.Librarians != null ? ev.Librarians.name : null })
+                            .Select(ev => new { Id = ev.id, Name = ev.name, Date = ev.date, Description = ev.description, LibrarianId = ev.librarian_id, Librarian = ev.Librarians != null ? ev.Librarians.name : null })
                             .ToList();
                     }
                 }
